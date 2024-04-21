@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 const userSchema = new Schema(
   {
     watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video" }],
-    usename: {
+    username: {
       type: String,
       required: true,
       unique: true,
@@ -28,7 +28,7 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String, // cloudinary url
-      required: true,
+      // required: true,
     },
     coverImage: {
       type: String, // cloudinary url
@@ -39,7 +39,7 @@ const userSchema = new Schema(
     },
     refreshToken: {
       type: String,
-      required: true,
+      // required: true,
     },
   },
   { timestamps: true }
@@ -47,7 +47,7 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
@@ -55,7 +55,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = async function () {
   return jwt.sign(
     {
       _id: this._id,
@@ -69,12 +69,13 @@ userSchema.methods.generateAccessToken = function () {
     }
   );
 };
+
 userSchema.methods.refreshAccessToken = async function () {
   return jwt.sign(
     {
       _id: this._id,
     },
-    process.env.REFRESH_TOKEN_SCRET,
+    process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
